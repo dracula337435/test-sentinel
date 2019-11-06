@@ -74,4 +74,24 @@ public class NacosTest {
         }
     }
 
+    /**
+     * 这个写法会出问题
+     * 一来如果sleep(...)使用200以下的，失败的会有极多
+     */
+    @Test
+    public void testAccident(){
+        while(true){
+            try {
+                System.out.println(testService.test());
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
