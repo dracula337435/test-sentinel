@@ -59,7 +59,7 @@ public class NacosTest {
     @Test
     public void test(){
         while(true){
-            for(int i=0; i<100; i++){
+            for(int i=0; i<20; i++){
                 try {
                     System.out.println(testService.test());
                 } catch (Exception e) {
@@ -78,7 +78,7 @@ public class NacosTest {
      * 这个写法会出问题
      * 一来如果sleep(...)使用200以下的，失败的会有极多
      */
-    @Test
+//    @Test
     public void testAccident(){
         while(true){
             try {
