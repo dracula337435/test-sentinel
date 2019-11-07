@@ -36,6 +36,7 @@ public class TestController {
     @GetMapping("/switchLoop")
     public boolean switchLoop(@RequestParam(name="count", defaultValue = "20") int count){
         loopSwitch = !loopSwitch;
+        this.count = count;
         synchronized (monitor) {
             monitor.notifyAll();
         }
