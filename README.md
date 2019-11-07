@@ -25,4 +25,17 @@ java -Dserver.port=8080 -Dcsp.sentinel.dashboard.server=localhost:8080 -Dproject
 2019-08-09 17:02:21.495  INFO 18180 --- [-localhost_8848] c.a.nacos.client.config.impl.CacheData   : [fixed-localhost_8848] [notify-listener] time cost=0ms in ClientWorker, dataId=test-sentinel, group=DEFAULT_GROUP, md5=4f5643ac25a487a2caba34cd56d7c2f6, listener=com.alibaba.csp.sentinel.datasource.nacos.NacosDataSource$1@212f6381 
 2019-08-09 17:02:21.496  INFO 18180 --- [update-thread-1] c.a.nacos.client.config.impl.CacheData   : [fixed-localhost_8848] [notify-ok] dataId=test-sentinel, group=DEFAULT_GROUP, md5=4f5643ac25a487a2caba34cd56d7c2f6, listener=com.alibaba.csp.sentinel.datasource.nacos.NacosDataSource$1@212f6381 
 ```
-在```dashboard```修改，在```nacos```不会有体现；反之可以
+在```dashboard```修改，在```nacos```不会有体现；反之可以  
+
+见[sentinel的github-wiki中启动配置项的说明](https://github.com/alibaba/Sentinel/wiki/%E5%90%AF%E5%8A%A8%E9%85%8D%E7%BD%AE%E9%A1%B9)，可知：
+>参数```csp.sentinel.api.port```为```本地启动 HTTP API Server 的端口号```  
+可不提供，默认为 8719，若端口冲突会自动向下探测可用的端口。
+
+示例启动命令
+```
+java -jar -Dcsp.sentinel.dashboard.server=localhost:8080 -Dproject.name=test-sentinel -Dserver.port=8082 test-sentinel-1.0-SNAPSHOT.jar
+```
+若不指定```server.port```，默认端口号为```8081```  
+示例端点为```/switchLoop```，返回开关是否打开```true/false```。若为```true```，则在约1s内调用```HelloWorld```资源20次  
+
+还发现，如果没有发交易，```sentinel-dashboard```左侧的应用列表中是没有的
