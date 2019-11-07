@@ -1,7 +1,11 @@
 package org.dracula.test.sentinel;
 
+import com.alibaba.csp.sentinel.cluster.ClusterStateManager;
 import com.alibaba.csp.sentinel.datasource.ReadableDataSource;
 import com.alibaba.csp.sentinel.datasource.nacos.NacosDataSource;
+import com.alibaba.csp.sentinel.slots.block.ClusterRuleConstant;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.ClusterFlowConfig;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import com.alibaba.fastjson.JSON;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -83,20 +88,27 @@ public class TestController {
     }
 
     public void sendInitConfigToNacos(){
+        //配置
+        FlowRule flowRule = new FlowRule();
+        flowRule.setResource("HelloWorld");
+        flowRule.setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_DEFAULT);
+        flowRule.setCount(5);
+        flowRule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        flowRule.setLimitApp("default");
+        flowRule.setStrategy(RuleConstant.STRATEGY_DIRECT);
+        //cluster
+        flowRule.setClusterMode(true);
+        ClusterFlowConfig clusterFlowConfig = new ClusterFlowConfig();
+        clusterFlowConfig.setThresholdType(ClusterRuleConstant.FLOW_THRESHOLD_GLOBAL);
+        flowRule.setClusterConfig(clusterFlowConfig);
+        //list
+        List<FlowRule> flowRuleList = new LinkedList<>();
+        flowRuleList.add(flowRule);
+        String rule = JSON.toJSONString(flowRuleList);
+        //
         String remoteAddress = "localhost";
         String groupId = "DEFAULT_GROUP";
         String dataId = "test-sentinel";
-        //放入配置
-        final String rule = "[\n"
-                + "  {\n"
-                + "    \"resource\": \"HelloWorld\",\n"
-                + "    \"controlBehavior\": 0,\n"   // 0. default(reject directly), 1. warm up, 2. rate limiter, 3. warm up + rate limiter
-                + "    \"count\": 5.0,\n"
-                + "    \"grade\": 1,\n" //0: thread count, 1: QPS
-                + "    \"limitApp\": \"default\",\n"
-                + "    \"strategy\": 0\n"
-                + "  }\n"
-                + "]";
         try {
             ConfigService configService = NacosFactory.createConfigService(remoteAddress);
             System.out.println(configService.publishConfig(dataId, groupId, rule));
@@ -108,6 +120,7 @@ public class TestController {
                 source -> JSON.parseObject(source, new TypeReference<List<FlowRule>>() {
                 }));
         FlowRuleManager.register2Property(flowRuleDataSource.getProperty());
+        ClusterStateManager.applyState(ClusterStateManager.CLUSTER_CLIENT);
     }
 
 }
