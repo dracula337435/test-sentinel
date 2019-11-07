@@ -10,78 +10,25 @@ import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.exception.NacosException;
 import org.dracula.test.sentinel.service.TestService;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 /**
  * @author dk
  */
-@RestController
-public class TestController {
-
-    @GetMapping("/hello")
-    public String getHello(@RequestParam(name = "name", defaultValue = "world") String name){
-        return "hello "+name;
-    }
-
-    private boolean loopSwitch;
-
-    private int count = 20;
-
-    @GetMapping("/switchLoop")
-    public boolean switchLoop(@RequestParam(name="count", defaultValue = "20") int count){
-        loopSwitch = !loopSwitch;
-        synchronized (monitor) {
-            monitor.notifyAll();
-        }
-        return loopSwitch;
-    }
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = MainApp.class)
+public class NacosTest {
 
     @Autowired
     private TestService testService;
 
-    private Object monitor = new Object();
-
-    @PostConstruct
-    public void loop(){
-        startLoopThread();
-        sendInitConfigToNacos();
-    }
-
-    public void startLoopThread(){
-        new Thread(()->{
-            while(true){
-                synchronized (monitor) {
-                    while(!loopSwitch){
-                        try {
-                            monitor.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    for(int i=0; i<count; i++){
-                        try {
-                            System.out.println(testService.test());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-    }
-
-    public void sendInitConfigToNacos(){
+    static {
         String remoteAddress = "localhost";
         String groupId = "DEFAULT_GROUP";
         String dataId = "test-sentinel";
@@ -107,6 +54,44 @@ public class TestController {
                 source -> JSON.parseObject(source, new TypeReference<List<FlowRule>>() {
                 }));
         FlowRuleManager.register2Property(flowRuleDataSource.getProperty());
+    }
+
+    @Test
+    public void test(){
+        while(true){
+            for(int i=0; i<20; i++){
+                try {
+                    System.out.println(testService.test());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 这个写法会出问题
+     * 一来如果sleep(...)使用200以下的，失败的会有极多
+     */
+//    @Test
+    public void testAccident(){
+        while(true){
+            try {
+                System.out.println(testService.test());
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
