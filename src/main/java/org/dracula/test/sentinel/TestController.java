@@ -31,8 +31,10 @@ public class TestController {
 
     private boolean loopSwitch;
 
+    private int count = 20;
+
     @GetMapping("/switchLoop")
-    public boolean switchLoop(){
+    public boolean switchLoop(@RequestParam(name="count", defaultValue = "20") int count){
         loopSwitch = !loopSwitch;
         synchronized (monitor) {
             monitor.notifyAll();
@@ -62,7 +64,7 @@ public class TestController {
                             e.printStackTrace();
                         }
                     }
-                    for(int i=0; i<20; i++){
+                    for(int i=0; i<count; i++){
                         try {
                             System.out.println(testService.test());
                         } catch (Exception e) {
